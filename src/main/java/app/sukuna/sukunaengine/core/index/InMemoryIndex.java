@@ -2,7 +2,6 @@ package app.sukuna.sukunaengine.core.index;
 
 import java.io.RandomAccessFile;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +15,7 @@ public class InMemoryIndex extends IndexBase {
 
     public InMemoryIndex() {
         //this.index = new HashMap<>();
+        this.index = new TreeMap<String, Long>();
         
         logger.debug("DebugId", "Created a new in memory index ({})", InMemoryIndex.class.getName());
     }

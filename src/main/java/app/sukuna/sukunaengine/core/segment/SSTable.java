@@ -32,6 +32,7 @@ public class SSTable extends SegmentBase {
 
         try {
             this.segmentFile = new RandomAccessFile(this.name, "r");
+            this.size = this.segmentFile.length();
 
             logger.info("Successfully initialized SSTable from segment file \"" + segmentName + "\"");
         } catch (Exception exception) {

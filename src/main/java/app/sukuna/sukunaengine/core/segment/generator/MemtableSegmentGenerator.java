@@ -14,6 +14,7 @@ import app.sukuna.sukunaengine.core.index.InMemoryIndex;
 import app.sukuna.sukunaengine.core.index.IndexBase;
 import app.sukuna.sukunaengine.core.memtable.Memtable;
 import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
+import app.sukuna.sukunaengine.utils.IndexUtils;
 import app.sukuna.sukunaengine.utils.StringUtils;
 
 public class MemtableSegmentGenerator implements ISegmentGenerator {
@@ -66,7 +67,7 @@ public class MemtableSegmentGenerator implements ISegmentGenerator {
                 segmentFile.close();
 
                 // Persist index data for segment too
-                this.persistIndexForSegment(segmentName, index);
+                IndexUtils.persistIndexForSegment(segmentName, index);
 
                 ImmutableInMemoryIndex immutableInMemoryIndex = new ImmutableInMemoryIndex();
                 immutableInMemoryIndex.createFrom(index);
@@ -79,39 +80,5 @@ public class MemtableSegmentGenerator implements ISegmentGenerator {
         }
 
         return null;
-    }
-
-    private void persistIndexForSegment(String segmentName, InMemoryIndex index) {
-        String indexFileForSegment = "index_" + segmentName;
-        try {
-            File f = new File(indexFileForSegment);
-            
-            if (f.exists()) {
-                logger.error("Unable to open output file stream: {}, file already exists", indexFileForSegment);
-            } else {
-                RandomAccessFile indexFile = new RandomAccessFile(indexFileForSegment, "rw");
-
-                String[] orderedKeys = index.getKeysOrdered();
-
-                for (String key : orderedKeys) {
-                    long offset = index.getOffset(key);
-                    byte keyLength = (byte) key.length();
-                    short offsetLength = 8; // bytes, size of long
-                    short recordLength = (short) (keyLength + offsetLength + 
-                        Configuration.SegmentRecordLengthDescriptorSize + 
-                        Configuration.SegmentKeyLengthDescriptorSize);
-                    
-                    indexFile.writeShort(recordLength);
-                    indexFile.writeByte(keyLength);
-                    indexFile.write(StringUtils.stringToBinary(key), 0, key.length());
-                    indexFile.writeLong(offset);
-                }
-
-                indexFile.close();
-            }
-        } catch (Exception exception) {
-            String errorMsg = "Error occurred while opening/writing to output file stream: " + indexFileForSegment;
-            logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(errorMsg, exception));
-        }
     }
 }

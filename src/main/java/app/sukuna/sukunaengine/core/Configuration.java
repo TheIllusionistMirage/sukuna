@@ -10,4 +10,6 @@ public class Configuration {
     // TODO: Move this to SegmentBase/SSTable
     public final static int SegmentRecordLengthDescriptorSize = 2; // in bytes
     public final static int SegmentKeyLengthDescriptorSize = 1;  // in bytes
+    public final static int MaxSegmentsAllowed = 4;
+    public final static int MaxCompactedSSTableSizeAllowed = 1024;
 }

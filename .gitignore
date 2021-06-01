@@ -55,3 +55,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# Sukuna
+/database-dumps

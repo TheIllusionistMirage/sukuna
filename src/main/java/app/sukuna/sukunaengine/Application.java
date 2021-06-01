@@ -6,10 +6,12 @@ import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import app.sukuna.sukunaengine.compactor.SSTableCompactor;
 import app.sukuna.sukunaengine.core.index.ImmutableInMemoryIndex;
 import app.sukuna.sukunaengine.core.index.InMemoryIndex;
 import app.sukuna.sukunaengine.core.memtable.Memtable;
 import app.sukuna.sukunaengine.core.segment.SSTable;
+import app.sukuna.sukunaengine.core.segment.SegmentBase;
 import app.sukuna.sukunaengine.core.segment.generator.ISegmentGenerator;
 import app.sukuna.sukunaengine.core.segment.generator.MemtableSegmentGenerator;
 import app.sukuna.sukunaengine.utils.SSTableCreationUtility;
@@ -22,52 +24,52 @@ public class Application {
 		// logger.error("test");
 
 		// Memtable mtable = new Memtable();
-		// mtable.upsert("apple", "value-apple");
-		// mtable.upsert("ball", "value-ball");
-		// mtable.upsert("cat", "value-cat");
-		// mtable.upsert("dog", "value-dog");
-		// mtable.upsert("elephant", "value-elephant");
-		// mtable.upsert("foot", "value-foot");
-		// mtable.upsert("game", "value-game");
-		// mtable.upsert("hip", "value-hip");
-		// mtable.upsert("illuminati", "value-illuminati");
-		// mtable.upsert("joker", "value-joker");
-		// mtable.upsert("king", "value-king");
-		// mtable.upsert("lemon", "value-lemon");
-		// mtable.upsert("man", "value-man");
-		// mtable.upsert("never", "value-never");
-		// mtable.upsert("octopus", "value-octopus");
-		// mtable.upsert("pot", "value-pot");
-		// mtable.upsert("queen", "value-queen");
-		// mtable.upsert("rust", "value-rust");
-		// mtable.upsert("straw", "value-straw");
-		// mtable.upsert("television", "value-television");
-		// mtable.upsert("uber", "value-uber");
-		// mtable.upsert("violin", "value-violin");
-		// mtable.upsert("water", "value-water");
-		// mtable.upsert("xmas", "value-xmas");
-		// mtable.upsert("yacht", "value-yacht");
-		// mtable.upsert("zero", "value-zero");
+		// mtable.upsert("appleb", "value-B-UPDATED-apple");
+		// mtable.upsert("ballb", "value-B-UPDATED-ball");
+		// mtable.upsert("catb", "value-B-UPDATED-cat");
+		// mtable.upsert("dogb", "value-B-UPDATED-dog");
+		// mtable.upsert("elephantb", "value-B-UPDATED-elephant");
+		// mtable.upsert("footb", "value-B-UPDATED-foot");
+		// mtable.upsert("gameb", "value-B-UPDATED-game");
+		// mtable.upsert("hipb", "value-B-UPDATED-hip");
+		// mtable.upsert("illuminatib", "value-B-UPDATED-illuminati");
+		// mtable.upsert("jokerb", "value-B-UPDATED-joker");
+		// mtable.upsert("kingb", "value-B-UPDATED-king");
+		// mtable.upsert("lemonb", "value-B-UPDATED-lemon");
+		// mtable.upsert("manb", "value-B-UPDATED-man");
+		// mtable.upsert("neverb", "value-B-UPDATED-never");
+		// mtable.upsert("octopusb", "value-B-UPDATED-octopus");
+		// mtable.upsert("potb", "value-B-UPDATED-pot");
+		// mtable.upsert("queenb", "value-B-UPDATED-queen");
+		// mtable.upsert("rustb", "value-B-UPDATED-rust");
+		// mtable.upsert("strawb", "value-B-UPDATED-straw");
+		// mtable.upsert("televisionb", "value-B-UPDATED-television");
+		// mtable.upsert("uberb", "value-B-UPDATED-uber");
+		// mtable.upsert("violinb", "value-B-UPDATED-violin");
+		// mtable.upsert("waterb", "value-B-UPDATED-water");
+		// mtable.upsert("xmasb", "value-B-UPDATED-xmas");
+		// mtable.upsert("yachtb", "value-B-UPDATED-yacht");
+		// mtable.upsert("zerob", "value-B-UPDATED-zero");
 
 		// ISegmentGenerator seggen = new MemtableSegmentGenerator();
-		// ImmutableInMemoryIndex index = seggen.fromMemtable("test-seg.bin", mtable);
+		// ImmutableInMemoryIndex index = seggen.fromMemtable("test4-seg.bin", mtable);
 
-		ImmutableInMemoryIndex index = new ImmutableInMemoryIndex();
-		index.initialize("test-seg.bin");
+		// ImmutableInMemoryIndex index = new ImmutableInMemoryIndex();
+		// index.initialize("test-seg.bin");
 
-		// index.printIndex();
-		SSTable sstable = new SSTable();
-		sstable.initialize("test-seg.bin", index);
+		// // index.printIndex();
+		// SSTable sstable = new SSTable();
+		// sstable.initialize("test-seg.bin", index);
 
-		logger.info("apple: " + sstable.read("apple"));
-		logger.info("illuminati: " + sstable.read("illuminati"));
-		logger.info("queen: " + sstable.read("queen"));
+		// logger.info("apple: " + sstable.read("apple"));
+		// logger.info("illuminati: " + sstable.read("illuminati"));
+		// logger.info("queen: " + sstable.read("queen"));
 
-		logger.info("game: " + sstable.read("game"));
-		logger.info("king: " + sstable.read("king"));
-		logger.info("xmas: " + sstable.read("xmas"));
+		// logger.info("game: " + sstable.read("game"));
+		// logger.info("king: " + sstable.read("king"));
+		// logger.info("xmas: " + sstable.read("xmas"));
 
-		sstable.close();
+		// sstable.close();
 
 		// SSTableCreationUtility.createSegment();
 		// SSTable sstable = new SSTable();
@@ -87,6 +89,35 @@ public class Application {
 		// logger.info(sstable.read("xmas"));
 
 		// sstable.close();
+
+		/////
+
+		ImmutableInMemoryIndex index2 = new ImmutableInMemoryIndex();
+		index2.initialize("test2-seg.bin");
+
+		ImmutableInMemoryIndex index3 = new ImmutableInMemoryIndex();
+		index3.initialize("test3-seg.bin");
+
+		ImmutableInMemoryIndex index4 = new ImmutableInMemoryIndex();
+		index4.initialize("test4-seg.bin");
+
+		SSTable sstable2 = new SSTable();
+		sstable2.initialize("test2-seg.bin", index2);
+		sstable2.rank = 2;
+
+		SSTable sstable3 = new SSTable();
+		sstable3.initialize("test3-seg.bin", index3);
+		sstable3.rank = 3;
+
+		SSTable sstable4 = new SSTable();
+		sstable4.initialize("test4-seg.bin", index4);
+		sstable4.rank = 4;
+
+		SSTableCompactor compactor = new SSTableCompactor();
+		SegmentBase[] compactedSSTables = compactor.compact(new SegmentBase[]{ sstable2, sstable3, sstable4 });
+		for (SegmentBase compactedSegment : compactedSSTables) {
+			compactedSegment.close();
+		}
 
 		logger.info("Application finished running");
 		LogManager.shutdown();
