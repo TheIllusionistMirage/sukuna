@@ -3,9 +3,15 @@ package app.sukuna.sukunaengine.core.segment.generator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.index.ImmutableInMemoryIndex;
+import app.sukuna.sukunaengine.core.index.InMemoryIndex;
+import app.sukuna.sukunaengine.core.index.IndexBase;
 import app.sukuna.sukunaengine.core.memtable.Memtable;
 import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 import app.sukuna.sukunaengine.utils.StringUtils;
@@ -13,25 +19,98 @@ import app.sukuna.sukunaengine.utils.StringUtils;
 public class MemtableSegmentGenerator implements ISegmentGenerator {
     private static final Logger logger = LoggerFactory.getLogger(MemtableSegmentGenerator.class);
 
-    public void fromMemtable(String segmentName, Memtable memtable) {
+    public ImmutableInMemoryIndex fromMemtable(String segmentName, Memtable memtable) {
         try {
-            OutputStream file;
             File f = new File(segmentName);
             
             if (f.exists()) {
                 logger.error("Unable to open output file stream: {}, file already exists", segmentName);
             } else {
-                file = new FileOutputStream(segmentName);
+                RandomAccessFile segmentFile = new RandomAccessFile(segmentName, "rw");
+                InMemoryIndex index = new InMemoryIndex();
+                // index.initialize(null, null);
+                
+                // Total bytes written to the segment file so far
+                long totalBytesWritten = 0;
+                // Total bytes corresponding to the current block written so far
+                long blockBytesWritten = 0;
 
-                for (var key : memtable.getSortedKeys()) {
-                    String segmentRecord = key + ":" + memtable.read(key) + "\n";
-                    file.write(StringUtils.stringToBinary(segmentRecord));
+                String[] sortedKeys = memtable.getSortedKeys();
+
+                // The first indexed key will always be the key at the beginning of the SSTable 
+                index.upsertOffset(sortedKeys[0], 0);
+
+                for (int i = 0; i < sortedKeys.length; i++) {
+                    if (blockBytesWritten >= Configuration.SegmentBlockSize) {
+                        index.upsertOffset(sortedKeys[i], totalBytesWritten);
+                        blockBytesWritten = 0;
+                    }
+
+                    String key = sortedKeys[i];
+                    String value = memtable.read(key);
+                    byte keyLength = (byte) key.length();
+                    short valueLength = (short) value.length();
+                    short recordLength = (short) (keyLength + valueLength + 
+                        Configuration.SegmentRecordLengthDescriptorSize + 
+                        Configuration.SegmentKeyLengthDescriptorSize);
+                    
+                    segmentFile.writeShort(recordLength);
+                    segmentFile.writeByte(keyLength);
+                    segmentFile.write(StringUtils.stringToBinary(key), 0, key.length());
+                    segmentFile.write(StringUtils.stringToBinary(value), 0, value.length());
+
+                    totalBytesWritten += recordLength;
+                    blockBytesWritten += recordLength;
                 }
 
-                file.close();
+                segmentFile.close();
+
+                // Persist index data for segment too
+                this.persistIndexForSegment(segmentName, index);
+
+                ImmutableInMemoryIndex immutableInMemoryIndex = new ImmutableInMemoryIndex();
+                immutableInMemoryIndex.createFrom(index);
+                return immutableInMemoryIndex;
             }
         } catch (Exception exception) {
-            String errorMsg = "Error occurred while opening output file stream: " + segmentName;
+            String errorMsg = "Error occurred while opening/writing to output file stream: " + segmentName;
+            logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(errorMsg, exception));
+            return null;
+        }
+
+        return null;
+    }
+
+    private void persistIndexForSegment(String segmentName, InMemoryIndex index) {
+        String indexFileForSegment = "index_" + segmentName;
+        try {
+            File f = new File(indexFileForSegment);
+            
+            if (f.exists()) {
+                logger.error("Unable to open output file stream: {}, file already exists", indexFileForSegment);
+            } else {
+                RandomAccessFile indexFile = new RandomAccessFile(indexFileForSegment, "rw");
+
+                String[] orderedKeys = index.getKeysOrdered();
+
+                for (String key : orderedKeys) {
+                    long offset = index.getOffset(key);
+                    byte keyLength = (byte) key.length();
+                    short offsetLength = 8; // bytes, size of long
+                    short recordLength = (short) (keyLength + offsetLength + 
+                        Configuration.SegmentRecordLengthDescriptorSize + 
+                        Configuration.SegmentKeyLengthDescriptorSize);
+                    
+                    indexFile.writeShort(recordLength);
+                    indexFile.writeByte(keyLength);
+                    indexFile.write(StringUtils.stringToBinary(key), 0, key.length());
+                    indexFile.writeLong(offset);
+                }
+
+                indexFile.close();
+            }
+        } catch (Exception exception) {
+            String errorMsg = "Error occurred while opening/writing to output file stream: " + indexFileForSegment;
             logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(errorMsg, exception));
         }
     }

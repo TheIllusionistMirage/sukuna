@@ -20,6 +20,8 @@ public class SSTable extends SegmentBase {
 
     @Override
     public void initialize(String segmentName, IndexBase index) {
+        logger.info("Initializing SSTable from segment file \"" + segmentName + "\"");
+
         // Check if segment file exists
         if (!FileUtils.fileExists(segmentName)) {
             // error
@@ -31,7 +33,7 @@ public class SSTable extends SegmentBase {
         try {
             this.segmentFile = new RandomAccessFile(this.name, "r");
 
-            // TODO: Initialize segment info
+            logger.info("Successfully initialized SSTable from segment file \"" + segmentName + "\"");
         } catch (Exception exception) {
             String errorMsg = "Error occurred while opening input file stream: " + this.name;
             logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(errorMsg, exception));

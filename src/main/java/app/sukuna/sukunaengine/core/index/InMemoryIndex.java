@@ -1,11 +1,15 @@
 package app.sukuna.sukunaengine.core.index;
 
+import java.io.RandomAccessFile;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
+import app.sukuna.sukunaengine.utils.FileUtils;
 
 public class InMemoryIndex extends IndexBase {
     private final Logger logger = LoggerFactory.getLogger(InMemoryIndex.class);
@@ -17,19 +21,46 @@ public class InMemoryIndex extends IndexBase {
     }
 
     @Override
-    public void initialize(String[] keys, int[] values) {
-        this.index = new TreeMap<String, Integer>();
+    public void initialize(String segmentName) {
+        String indexFileName = "index_" + segmentName;
 
-        if (keys != null && values != null) {
-            if (keys.length != values.length) {
-                String errorMsg = "The number of keys and the values should be equal when initializing an index, got key list size: " + keys.length + " and value list size: " + values.length;
-                logger.error(errorMsg);
-                throw new IllegalArgumentException(errorMsg);
+        logger.info("Initializing index from index file \"" + indexFileName + "\" for segment \"" + segmentName + "\"...");
+
+        // Check if index file for segment exists
+        if (!FileUtils.fileExists(indexFileName)) {
+            // error
+            logger.error("Index file for \"" + segmentName + "\" does not exist");
+        }
+
+        try {
+            RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "r");
+
+            // Read all index records
+            long indexFileLength = indexFile.length();
+            long totalBytesRead = 0;
+
+            this.index = new TreeMap<String, Long>();
+
+            while (totalBytesRead < indexFileLength) {
+                int recordLength = (int) indexFile.readShort();
+                int keyLength = (int) indexFile.readByte();
+                
+                // Read the key
+                byte[] keyByteArray = new byte[keyLength];
+                indexFile.read(keyByteArray, 0, keyLength);
+                String recordKey = new String(keyByteArray);
+                long offset = indexFile.readLong();
+
+                this.index.put(recordKey, offset);
+
+                totalBytesRead += recordLength;
             }
-            
-            for (int i = 0; i < values.length; i++) {
-                this.index.put(keys[i], values[i]);
-            }
+
+            indexFile.close();
+            logger.info("Successfully read index info from index file \"" + indexFileName + "\"");
+        } catch (Exception exception) {
+            String errorMsg = "Error occurred while opening input file stream: " + indexFileName;
+            logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(errorMsg, exception));
         }
     }
 
@@ -39,13 +70,13 @@ public class InMemoryIndex extends IndexBase {
     }
 
     @Override
-    public int getOffset(String key) {
-        Integer offset = this.index.get(key);
-        return offset == null ? Configuration.InvalidIndexOffset : offset.intValue();
+    public long getOffset(String key) {
+        Long offset = this.index.get(key);
+        return offset == null ? Configuration.InvalidIndexOffset : offset.longValue();
     }
 
     @Override
-    public void upsertOffset(String key, int offset) {
+    public void upsertOffset(String key, long offset) {
         this.index.put(key, offset);
         
         logger.debug("DebugId", "Upserted Key-Value pair into the index - {}:{}", key, offset);
@@ -60,11 +91,16 @@ public class InMemoryIndex extends IndexBase {
 
     @Override
     public String getHighestKeyLowerThan(String key) {
-        return ((TreeMap<String, Integer>) this.index).lowerKey(key);
+        return ((TreeMap<String, Long>) this.index).lowerKey(key);
     }
 
     @Override
     public String getLowestKeyHigherThan(String key) {
-        return ((TreeMap<String, Integer>) this.index).higherKey(key);
+        return ((TreeMap<String, Long>) this.index).higherKey(key);
+    }
+
+    @Override
+    public String[] getKeysOrdered() {
+        return this.index.keySet().toArray(new String[0]);
     }
 }

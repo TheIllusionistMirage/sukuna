@@ -18,7 +18,7 @@ public class ImmutableInMemoryIndex extends InMemoryIndex {
     // }
 
     @Override
-    public void upsertOffset(String key, int offset) {
+    public void upsertOffset(String key, long offset) {
         String errorMsg = "Inserting/updating the offset for a key not allowed in this index type";
         logger.error(errorMsg);
         throw new UnsupportedOperationException(errorMsg);
@@ -27,6 +27,10 @@ public class ImmutableInMemoryIndex extends InMemoryIndex {
     @Override
     public void deleteOffset(String key) {
         throw new UnsupportedOperationException("Deleting a key not allowed in this index type");
+    }
+
+    public void createFrom(InMemoryIndex inMemoryIndex) {
+        this.index = inMemoryIndex.index;
     }
 
     // @Override

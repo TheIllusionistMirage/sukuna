@@ -10,8 +10,16 @@ public class ErrorHandlingUtils {
         sb.append("Exception(s) occurred: ");
         sb.append(exception.getMessage());
         sb.append("\n");
-        sb.append("Stack trace: ");
-        sb.append(exception.getStackTrace().toString());
+        sb.append("Stack trace:\n");
+        
+        for (StackTraceElement stElement : exception.getStackTrace()) {
+            String[] strackTraceMessage = stElement.toString().split("\\)");
+            for (String string : strackTraceMessage) {
+                sb.append("\t");
+                sb.append(string);
+                sb.append(")\n");
+            }
+        }
 
         return sb.toString();
     }
