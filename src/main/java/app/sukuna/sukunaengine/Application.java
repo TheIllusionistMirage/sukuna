@@ -103,15 +103,15 @@ public class Application {
 
 		SSTable sstable2 = new SSTable();
 		sstable2.initialize("test2-seg.bin", index2);
-		sstable2.rank = 2;
+		sstable2.tableNumber = 2;
 
 		SSTable sstable3 = new SSTable();
 		sstable3.initialize("test3-seg.bin", index3);
-		sstable3.rank = 3;
+		sstable3.tableNumber = 3;
 
 		SSTable sstable4 = new SSTable();
 		sstable4.initialize("test4-seg.bin", index4);
-		sstable4.rank = 4;
+		sstable4.tableNumber = 4;
 
 		SSTableCompactor compactor = new SSTableCompactor();
 		SegmentBase[] compactedSSTables = compactor.compact(new SegmentBase[]{ sstable2, sstable3, sstable4 });

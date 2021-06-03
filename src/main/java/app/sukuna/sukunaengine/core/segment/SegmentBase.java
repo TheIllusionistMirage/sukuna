@@ -13,7 +13,7 @@ public abstract class SegmentBase {
     public String name;
     protected IndexBase index;
     // TODO: Make this field final
-    public int rank; // Rank of SST, higher the rank the more recent it is
+    public int tableNumber; // The number of the SST, higher the number the more recent it is, and earlier it is checked for reads
     public long size; // segment size on disk
     // TODO: Use FileChannel from NIO to support concurrent file access 
     protected RandomAccessFile segmentFile;

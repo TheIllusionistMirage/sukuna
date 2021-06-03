@@ -67,10 +67,16 @@ public class SSTable extends SegmentBase {
             try {
                 // Check the entire block, record by record to see if the key exists
                 offset = this.index.getOffset(highestKeyLower);
-                long blockSize = this.segmentFile.length();
+                String lowestKeyHigher = this.index.getLowestKeyHigherThan(key);
+
+                // The stopping offset is either the start of the next block (if one exists) or the end of the file (if the block being checked is the last one)
+                long stoppingOffset = lowestKeyHigher != null ? this.index.getOffset(lowestKeyHigher) : this.segmentFile.length();
+
+                // long blockSize = this.segmentFile.length();
                 String value = null;
 
-                while (offset < blockSize) {
+                // while (offset < blockSize) {
+                while (offset < stoppingOffset) {
                     this.segmentFile.seek(offset);
 
                     // First 2 bytes from the offset containt the length of the record

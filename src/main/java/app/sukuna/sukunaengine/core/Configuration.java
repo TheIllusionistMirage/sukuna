@@ -12,4 +12,9 @@ public class Configuration {
     public final static int SegmentKeyLengthDescriptorSize = 1;  // in bytes
     public final static int MaxSegmentsAllowed = 4;
     public final static int MaxCompactedSSTableSizeAllowed = 1024;
+    public final static int PendingReadOperationQueueSize = 1024;
+    public final static int PendingWriteOperationQueueSize = 1024;
+    public final static long InvalidSegmentOffsetIndicator = -1;
+    public final static long DeletedIndexedRecordOffsetIndicator = -1;
+    public final static short DeletedRecordValueInSegmentIndicator = 0xff;
 }

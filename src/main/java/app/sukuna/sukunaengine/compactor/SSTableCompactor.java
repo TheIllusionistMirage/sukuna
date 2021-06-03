@@ -212,7 +212,7 @@ public class SSTableCompactor implements ICompactor {
             byte[] valueByteArray = new byte[valueLength];
             segmentFile.read(valueByteArray, 0, valueLength);
             
-            return new Record(segment.name, segment.rank, recordLength, keyLength, valueLength, keyByteArray, valueByteArray);
+            return new Record(segment.name, segment.tableNumber, recordLength, keyLength, valueLength, keyByteArray, valueByteArray);
         } catch(Exception exception) {
             String errorMsg = "Error occurred while reading input file stream: " + segment.name;
             logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(errorMsg, exception));
