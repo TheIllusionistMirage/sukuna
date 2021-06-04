@@ -5,6 +5,7 @@ import java.net.Socket;
 import app.sukuna.sukunaengine.core.exceptions.InvalidClientException;
 
 public abstract class OperationBase {
+    // TODO: Introduce abstraction for a client (e.g., a client can also be another class instead of a TCP socket)
     public final Socket client;
 
     public OperationBase(Socket client) throws InvalidClientException {

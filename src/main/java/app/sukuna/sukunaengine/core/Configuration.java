@@ -17,4 +17,5 @@ public class Configuration {
     public final static long InvalidSegmentOffsetIndicator = -1;
     public final static long DeletedIndexedRecordOffsetIndicator = -1;
     public final static short DeletedRecordValueInSegmentIndicator = 0xff;
+    public final static int SukunaServicePort = 6969;
 }

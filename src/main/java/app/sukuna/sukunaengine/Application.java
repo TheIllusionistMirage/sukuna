@@ -14,6 +14,7 @@ import app.sukuna.sukunaengine.core.segment.SSTable;
 import app.sukuna.sukunaengine.core.segment.SegmentBase;
 import app.sukuna.sukunaengine.core.segment.generator.ISegmentGenerator;
 import app.sukuna.sukunaengine.core.segment.generator.MemtableSegmentGenerator;
+import app.sukuna.sukunaengine.service.SukunaService;
 import app.sukuna.sukunaengine.utils.SSTableCreationUtility;
 
 public class Application {
@@ -92,32 +93,35 @@ public class Application {
 
 		/////
 
-		ImmutableInMemoryIndex index2 = new ImmutableInMemoryIndex();
-		index2.initialize("test2-seg.bin");
+		// ImmutableInMemoryIndex index2 = new ImmutableInMemoryIndex();
+		// index2.initialize("test2-seg.bin");
 
-		ImmutableInMemoryIndex index3 = new ImmutableInMemoryIndex();
-		index3.initialize("test3-seg.bin");
+		// ImmutableInMemoryIndex index3 = new ImmutableInMemoryIndex();
+		// index3.initialize("test3-seg.bin");
 
-		ImmutableInMemoryIndex index4 = new ImmutableInMemoryIndex();
-		index4.initialize("test4-seg.bin");
+		// ImmutableInMemoryIndex index4 = new ImmutableInMemoryIndex();
+		// index4.initialize("test4-seg.bin");
 
-		SSTable sstable2 = new SSTable();
-		sstable2.initialize("test2-seg.bin", index2);
-		sstable2.tableNumber = 2;
+		// SSTable sstable2 = new SSTable();
+		// sstable2.initialize("test2-seg.bin", index2);
+		// sstable2.tableNumber = 2;
 
-		SSTable sstable3 = new SSTable();
-		sstable3.initialize("test3-seg.bin", index3);
-		sstable3.tableNumber = 3;
+		// SSTable sstable3 = new SSTable();
+		// sstable3.initialize("test3-seg.bin", index3);
+		// sstable3.tableNumber = 3;
 
-		SSTable sstable4 = new SSTable();
-		sstable4.initialize("test4-seg.bin", index4);
-		sstable4.tableNumber = 4;
+		// SSTable sstable4 = new SSTable();
+		// sstable4.initialize("test4-seg.bin", index4);
+		// sstable4.tableNumber = 4;
 
-		SSTableCompactor compactor = new SSTableCompactor();
-		SegmentBase[] compactedSSTables = compactor.compact(new SegmentBase[]{ sstable2, sstable3, sstable4 });
-		for (SegmentBase compactedSegment : compactedSSTables) {
-			compactedSegment.close();
-		}
+		// SSTableCompactor compactor = new SSTableCompactor();
+		// SegmentBase[] compactedSSTables = compactor.compact(new SegmentBase[]{ sstable2, sstable3, sstable4 });
+		// for (SegmentBase compactedSegment : compactedSSTables) {
+		// 	compactedSegment.close();
+		// }
+
+		SukunaService service = new SukunaService();
+		service.start();
 
 		logger.info("Application finished running");
 		LogManager.shutdown();
