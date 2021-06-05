@@ -64,7 +64,8 @@ public class ReaderWorker extends Thread implements IReaderWorker {
     // IReaderWorker overrides
     @Override
     public ReadOperation retrievePendingReadOperation() throws InterruptedException {
-        return this.operationQueue.pendingReadOperations.take();
+        //return this.operationQueue.pendingReadOperations.take();
+        return this.operationQueue.retrievePendingReadOperation();
     }
 
     @Override
@@ -134,6 +135,9 @@ public class ReaderWorker extends Thread implements IReaderWorker {
     }
 
     private boolean SSTableUpdateRequired() {
+        if (this.sstables == null) {
+            return true;
+        }
         for (String segmentName : this.activeSSTables.getActiveSSTables()) {
             if (!this.sstables.containsKey(segmentName)) {
                 return true;
@@ -149,7 +153,7 @@ public class ReaderWorker extends Thread implements IReaderWorker {
         for (String segmentName : this.activeSSTables.getActiveSSTables()) {
             SSTable sstable = new SSTable();
             
-            ImmutableInMemoryIndex index = new ImmutableInMemoryIndex();
+            ImmutableInMemoryIndex index = new ImmutableInMemoryIndex(segmentName);
             index.initialize(segmentName);
             
             sstable.initialize(segmentName, index);

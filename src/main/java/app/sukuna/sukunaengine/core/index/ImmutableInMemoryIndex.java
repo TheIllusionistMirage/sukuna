@@ -6,10 +6,11 @@ import org.slf4j.LoggerFactory;
 public class ImmutableInMemoryIndex extends InMemoryIndex {
     private final Logger logger = LoggerFactory.getLogger(ImmutableInMemoryIndex.class);
 
-    public ImmutableInMemoryIndex() {
+    public ImmutableInMemoryIndex(String name) {
+        super(name);
         //this.index = new TreeMap<String, Integer>();
         
-        logger.debug("DebugId", "Created a new in memory index ({})", InMemoryIndex.class.getName());
+        logger.debug("Created a new in memory index ({})", InMemoryIndex.class.getName());
     }
 
     // @Override

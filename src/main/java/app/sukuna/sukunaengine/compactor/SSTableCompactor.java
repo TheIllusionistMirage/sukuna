@@ -1,5 +1,6 @@
 package app.sukuna.sukunaengine.compactor;
 
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import app.sukuna.sukunaengine.utils.IndexUtils;
 
 public class SSTableCompactor implements ICompactor {
     // private List<String> outputSegmentFileNames = new ArrayList<>();
+    private static int number = -1; 
     private static final Logger logger = LoggerFactory.getLogger(SSTableCompactor.class);
 
     @Override
@@ -48,13 +50,14 @@ public class SSTableCompactor implements ICompactor {
             // while (totalBytesReadFromInputSSTables < totalBytesSpanningInputSSTables) { }
             
             // Initialize a new output segment file to write compacted and merged records to
-            int currentOutputSegmentIdentifier = 0;
+            // int currentOutputSegmentIdentifier = 0;
 
             // outputSegmentFileNames.add("compacted-segment-" + currentOutputSegmentIdentifier++);
             // RandomAccessFile currentOutputSegmentFile = new RandomAccessFile(outputSegmentFileNames.get(currentOutputSegmentIdentifier - 1), "rw");
 
-            RandomAccessFile currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + currentOutputSegmentIdentifier++, "rw");
-            InMemoryIndex currentOutputSegmentIndex = new InMemoryIndex();
+            // RandomAccessFile currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + currentOutputSegmentIdentifier++, "rw");
+            RandomAccessFile currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + ++SSTableCompactor.number, "rw");
+            InMemoryIndex currentOutputSegmentIndex = new InMemoryIndex("compacted-segment-" + SSTableCompactor.number);
             long currentOutputSegmentOffset = 0;
 
             // The current record being considered for each segment
@@ -88,20 +91,23 @@ public class SSTableCompactor implements ICompactor {
             while (totalBytesReadFromInputSSTables != totalBytesSpanningInputSSTables) {
                 // Identify record with lowest key
                 Record record = this.getLowestRecord(currentRecords);
+                String recordKey = new String(record.keyByteArray);
 
                 // TODO: Enable this back
                 // If current output segment will exceed maximum allowed segment size, then close this segment and create a new one
                 if (currentOutputSegmentFile.length() + record.recordLength >= Configuration.MaxCompactedSSTableSizeAllowed) {
                     currentOutputSegmentFile.close();
                     SSTable lastCompactedSSTable = new SSTable();
-                    IndexUtils.persistIndexForSegment("compacted-segment-" + (currentOutputSegmentIdentifier - 1), currentOutputSegmentIndex);
-                    ImmutableInMemoryIndex index = new ImmutableInMemoryIndex();
+                    // IndexUtils.persistIndexForSegment("compacted-segment-" + (currentOutputSegmentIdentifier - 1), currentOutputSegmentIndex);
+                    IndexUtils.persistIndexForSegment("compacted-segment-" + SSTableCompactor.number, currentOutputSegmentIndex);
+                    ImmutableInMemoryIndex index = new ImmutableInMemoryIndex("compacted-segment-" + SSTableCompactor.number);
                     index.createFrom(currentOutputSegmentIndex);
-                    lastCompactedSSTable.initialize("compacted-segment-" + (currentOutputSegmentIdentifier - 1), index);
+                    // lastCompactedSSTable.initialize("compacted-segment-" + (currentOutputSegmentIdentifier - 1), index);
+                    lastCompactedSSTable.initialize("compacted-segment-" + SSTableCompactor.number, index);
                     sstables.add(lastCompactedSSTable);
                     currentOutputSegmentOffset = 0;
 
-                    currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + currentOutputSegmentIdentifier++, "rw");
+                    currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + ++SSTableCompactor.number, "rw");
                 }
 
                 // Write the record to the new segment
@@ -118,6 +124,11 @@ public class SSTableCompactor implements ICompactor {
                 for (Record r : currentRecords.get(lowestKey)) {
                     // Fetch the next record for all segments that this key was present in
                     SegmentBase segment = segmentMap.get(r.containingSegmentName);
+
+                    if (segment.size == currentSegmentOffsets.get(segment.name)) {
+                        continue;
+                    }
+
                     Record newRecord = this.getNextRecord(segment, currentSegmentOffsets.get(segment.name));
                     
                     this.addToCurrentRecordsList(currentRecords, newRecord);
@@ -141,14 +152,17 @@ public class SSTableCompactor implements ICompactor {
                 if (currentOutputSegmentFile.length() + record.recordLength >= Configuration.MaxCompactedSSTableSizeAllowed) {
                     currentOutputSegmentFile.close();
                     SSTable lastCompactedSSTable = new SSTable();
-                    IndexUtils.persistIndexForSegment("compacted-segment-" + (currentOutputSegmentIdentifier - 1), currentOutputSegmentIndex);
-                    ImmutableInMemoryIndex index = new ImmutableInMemoryIndex();
+                    // IndexUtils.persistIndexForSegment("compacted-segment-" + (currentOutputSegmentIdentifier - 1), currentOutputSegmentIndex);
+                    IndexUtils.persistIndexForSegment("compacted-segment-" + SSTableCompactor.number, currentOutputSegmentIndex);
+                    ImmutableInMemoryIndex index = new ImmutableInMemoryIndex("compacted-segment-" + SSTableCompactor.number);
                     index.createFrom(currentOutputSegmentIndex);
-                    lastCompactedSSTable.initialize("compacted-segment-" + (currentOutputSegmentIdentifier - 1), index);
+                    // lastCompactedSSTable.initialize("compacted-segment-" + (currentOutputSegmentIdentifier - 1), index);
+                    lastCompactedSSTable.initialize("compacted-segment-" + SSTableCompactor.number, index);
                     sstables.add(lastCompactedSSTable);
                     currentOutputSegmentOffset = 0;
 
-                    currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + currentOutputSegmentIdentifier++, "rw");
+                    // currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + currentOutputSegmentIdentifier++, "rw");
+                    currentOutputSegmentFile = new RandomAccessFile("compacted-segment-" + ++SSTableCompactor.number, "rw");
                 }
 
                 // Write the record to the new segment
@@ -179,7 +193,10 @@ public class SSTableCompactor implements ICompactor {
                 currentRecords.remove(new String(record.keyByteArray));
             }
 
-            // TODO: Iterate over each record left in currentRecords once loop above finishes
+            // If the current compacted segment being written to is not full, it was not closed and its index persisted.
+            if (currentOutputSegmentFile.length() > 0 && currentOutputSegmentFile.length() <= Configuration.MaxCompactedSSTableSizeAllowed) {
+                persistCurrentSegmentFile(currentOutputSegmentFile, currentOutputSegmentIndex, sstables);
+            }
 
             // return (SegmentBase[]) sstables.toArray();
             SSTable[] sstablesArray = new SSTable[sstables.size()];
@@ -192,6 +209,24 @@ public class SSTableCompactor implements ICompactor {
             // Error
             exception.printStackTrace();
             return null;
+        }
+    }
+
+    private void persistCurrentSegmentFile(RandomAccessFile currentOutputSegmentFile, InMemoryIndex currentOutputSegmentIndex, List<SSTable> sstables) {
+        try {
+            currentOutputSegmentFile.close();
+            SSTable lastCompactedSSTable = new SSTable();
+            // IndexUtils.persistIndexForSegment("compacted-segment-" + (currentOutputSegmentIdentifier - 1), currentOutputSegmentIndex);
+            IndexUtils.persistIndexForSegment("compacted-segment-" + SSTableCompactor.number, currentOutputSegmentIndex);
+            ImmutableInMemoryIndex index = new ImmutableInMemoryIndex("compacted-segment-" + SSTableCompactor.number);
+            index.createFrom(currentOutputSegmentIndex);
+            // lastCompactedSSTable.initialize("compacted-segment-" + (currentOutputSegmentIdentifier - 1), index);
+            lastCompactedSSTable.initialize("compacted-segment-" + SSTableCompactor.number, index);
+            sstables.add(lastCompactedSSTable);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            logger.error("Error occured when attempting to close current output segment file: " + ("compacted-segment-" + SSTableCompactor.number));
+            e.printStackTrace();
         }
     }
 

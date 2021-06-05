@@ -45,7 +45,8 @@ import app.sukuna.sukunaengine.service.operation.WriteOperation;
     // IWriterWorker overrides
     @Override
     public WriteOperation retrievePendingWriteOperation() throws InterruptedException {
-        return this.operationQueue.pendingWriteOperations.take();
+        // return this.operationQueue.pendingWriteOperations.take();
+        return this.operationQueue.retrievePendingWriteOperation();
     }
 
     @Override

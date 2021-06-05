@@ -7,6 +7,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import app.sukuna.sukunaengine.core.Configuration;
 
 public class Memtable extends MemtableBase {
+    public static int number = 0;
+    public final String name;
     private final TreeMap<String, String> memtable = new TreeMap<>();
     private int currentMemtableSize;
 
@@ -18,6 +20,8 @@ public class Memtable extends MemtableBase {
     public Memtable() {
         super(Configuration.MaxMemtableSizeBeforeSegmentation);
         this.currentMemtableSize = 0;
+
+        this.name = "memtable-" + Memtable.number++;
     }
 
     @Override

@@ -13,11 +13,13 @@ import app.sukuna.sukunaengine.utils.FileUtils;
 public class InMemoryIndex extends IndexBase {
     private final Logger logger = LoggerFactory.getLogger(InMemoryIndex.class);
 
-    public InMemoryIndex() {
+    public InMemoryIndex(String name) {
+        super(name);
+
         //this.index = new HashMap<>();
         this.index = new TreeMap<String, Long>();
         
-        logger.debug("DebugId", "Created a new in memory index ({})", InMemoryIndex.class.getName());
+        logger.debug("Created a new in memory index ({})", InMemoryIndex.class.getName());
     }
 
     @Override
@@ -79,14 +81,14 @@ public class InMemoryIndex extends IndexBase {
     public void upsertOffset(String key, long offset) {
         this.index.put(key, offset);
         
-        logger.debug("DebugId", "Upserted Key-Value pair into the index - {}:{}", key, offset);
+        logger.debug("Upserted Key-Value pair into the index - {}:{}", key, offset);
     }
 
     @Override
     public void deleteOffset(String key) {
         this.index.remove(key);
         
-        logger.debug("DebugId", "Removed key {} from the index", key);
+        logger.debug("Removed key {} from the index", key);
     }
 
     @Override

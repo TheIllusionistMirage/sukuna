@@ -28,7 +28,7 @@ public class MemtableSegmentGenerator implements ISegmentGenerator {
                 logger.error("Unable to open output file stream: {}, file already exists", segmentName);
             } else {
                 RandomAccessFile segmentFile = new RandomAccessFile(segmentName, "rw");
-                InMemoryIndex index = new InMemoryIndex();
+                InMemoryIndex index = new InMemoryIndex(segmentName);
                 // index.initialize(null, null);
                 
                 // Total bytes written to the segment file so far
@@ -69,7 +69,7 @@ public class MemtableSegmentGenerator implements ISegmentGenerator {
                 // Persist index data for segment too
                 IndexUtils.persistIndexForSegment(segmentName, index);
 
-                ImmutableInMemoryIndex immutableInMemoryIndex = new ImmutableInMemoryIndex();
+                ImmutableInMemoryIndex immutableInMemoryIndex = new ImmutableInMemoryIndex(segmentName);
                 immutableInMemoryIndex.createFrom(index);
                 return immutableInMemoryIndex;
             }

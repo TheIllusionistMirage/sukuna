@@ -12,7 +12,7 @@ public class AppendOnlyLog extends LogBase {
     private static final Logger logger = LoggerFactory.getLogger(AppendOnlyLog.class);
     
     public AppendOnlyLog(String name) {
-        super(name, Configuration.MaxLogSizeBeforeCompaction, new InMemoryIndex());
+        super(name, Configuration.MaxLogSizeBeforeCompaction, new InMemoryIndex("current-memtable-crash-recovery-log"));
     }
 
     // @Override

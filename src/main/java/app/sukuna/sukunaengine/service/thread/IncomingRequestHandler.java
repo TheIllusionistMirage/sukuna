@@ -1,6 +1,7 @@
 package app.sukuna.sukunaengine.service.thread;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,12 +35,12 @@ public class IncomingRequestHandler extends Thread {
     public void run() {
         InputStream clientInputStream = null;
         BufferedReader bufferedReader = null;
-        // DataOutputStream clientOutputStream = null;
+        DataOutputStream clientOutputStream = null;
         
         try {
             clientInputStream = clientSocket.getInputStream();
             bufferedReader = new BufferedReader(new InputStreamReader(clientInputStream));
-            // clientOutputStream = new DataOutputStream(clientSocket.getOutputStream());
+            clientOutputStream = new DataOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
             logger.error("An error occurred when attempting to establish input and output streams for client");
             e.printStackTrace();
@@ -47,6 +48,7 @@ public class IncomingRequestHandler extends Thread {
         }
 
         try {
+            clientOutputStream.writeBytes("Enter a command: ");
             String clientInput = bufferedReader.readLine();
             logger.trace("Client request command: " + clientInput);
 
@@ -58,10 +60,12 @@ public class IncomingRequestHandler extends Thread {
                 logger.trace("The connection to the client was closed");
             }
             if (operation instanceof ReadOperation) {
-                this.operationQueue.pendingReadOperations.put((ReadOperation) operation);
+                //this.operationQueue.pendingReadOperations.put((ReadOperation) operation);
+                this.operationQueue.enqueueReadOperation((ReadOperation) operation);
             }
             else if (operation instanceof WriteOperation) {
-                this.operationQueue.pendingWriteOperations.put((WriteOperation) operation);
+                // this.operationQueue.pendingWriteOperations.put((WriteOperation) operation);
+                this.operationQueue.enqueueWriteOperation((WriteOperation) operation);
             }
         } catch (Exception e) {
             logger.error("An error occurred when attempting to read client request command for client");

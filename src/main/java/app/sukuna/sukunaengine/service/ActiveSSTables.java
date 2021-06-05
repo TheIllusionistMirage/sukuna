@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ActiveSSTables {
     private List<String> segmentNames;
 
@@ -12,6 +15,7 @@ public class ActiveSSTables {
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
     private final Lock readLock = readWriteLock.readLock();
     private final Lock writeLock = readWriteLock.writeLock();
+    private final static Logger logger = LoggerFactory.getLogger(ActiveSSTables.class);
 
     public ActiveSSTables() {
         this.segmentNames = new ArrayList<>();
@@ -35,5 +39,13 @@ public class ActiveSSTables {
         } finally {
             this.writeLock.unlock();
         }
+    }
+
+    public void printActiveSSTables() {
+        String activeSSTables = "";
+        for (String sstableName : this.segmentNames) {
+            activeSSTables += sstableName + " ";
+        }
+        logger.info("ACTIVE SSTABLES: Currently active SSTables: " + activeSSTables);
     }
 }

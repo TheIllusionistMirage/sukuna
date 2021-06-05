@@ -93,25 +93,25 @@ public class Application {
 
 		/////
 
-		// ImmutableInMemoryIndex index2 = new ImmutableInMemoryIndex();
-		// index2.initialize("test2-seg.bin");
+		// ImmutableInMemoryIndex index2 = new ImmutableInMemoryIndex("memtable-0-segment");
+		// index2.initialize("memtable-0-segment");
 
-		// ImmutableInMemoryIndex index3 = new ImmutableInMemoryIndex();
-		// index3.initialize("test3-seg.bin");
+		// ImmutableInMemoryIndex index3 = new ImmutableInMemoryIndex("memtable-1-segment");
+		// index3.initialize("memtable-1-segment");
 
-		// ImmutableInMemoryIndex index4 = new ImmutableInMemoryIndex();
-		// index4.initialize("test4-seg.bin");
+		// ImmutableInMemoryIndex index4 = new ImmutableInMemoryIndex("memtable-2-segment");
+		// index4.initialize("memtable-2-segment");
 
 		// SSTable sstable2 = new SSTable();
-		// sstable2.initialize("test2-seg.bin", index2);
+		// sstable2.initialize("memtable-0-segment", index2);
 		// sstable2.tableNumber = 2;
 
 		// SSTable sstable3 = new SSTable();
-		// sstable3.initialize("test3-seg.bin", index3);
+		// sstable3.initialize("memtable-1-segment", index3);
 		// sstable3.tableNumber = 3;
 
 		// SSTable sstable4 = new SSTable();
-		// sstable4.initialize("test4-seg.bin", index4);
+		// sstable4.initialize("memtable-2-segment", index4);
 		// sstable4.tableNumber = 4;
 
 		// SSTableCompactor compactor = new SSTableCompactor();

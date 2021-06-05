@@ -15,9 +15,8 @@ import app.sukuna.sukunaengine.core.memtable.Memtable;
 import app.sukuna.sukunaengine.service.command.IClientCommandParser;
 import app.sukuna.sukunaengine.service.command.TcpClientCommandParser;
 import app.sukuna.sukunaengine.service.operation.OperationQueue;
-import app.sukuna.sukunaengine.service.operation.ReadOperation;
-import app.sukuna.sukunaengine.service.operation.WriteOperation;
 import app.sukuna.sukunaengine.service.thread.IncomingRequestHandler;
+import app.sukuna.sukunaengine.service.thread.SukunaServiceManagerThread;
 import app.sukuna.sukunaengine.service.worker.ReaderWorker;
 import app.sukuna.sukunaengine.service.worker.WriterWorker;
 
@@ -33,6 +32,7 @@ public class SukunaService {
     public OperationQueue operationQueue;
     private ServerSocket serverSocket;
     private IClientCommandParser clientCommandParser;
+    private SukunaServiceManagerThread serviceManager;
     private static final Logger logger = LoggerFactory.getLogger(SukunaService.class);
 
     // Call default constructor when database engine starting with no previous data
@@ -59,6 +59,9 @@ public class SukunaService {
 
         // Initialize the client command parser
         this.clientCommandParser = new TcpClientCommandParser();
+
+        // Initialize the service manager thread
+        this.serviceManager = new SukunaServiceManagerThread(this.activeMemtables, this.activeSSTables);
     }
 
     // TODO: Call special parameterized constructor/initialize function when database engine restarting or starting with previously available data
@@ -86,9 +89,12 @@ public class SukunaService {
             e.printStackTrace();
         }
 
+        // Start the service manager thread
+        this.serviceManager.start();
+        logger.info("Started the SukunaServiceManager thread for service management [OK]");
+
         logger.info("Started Sukuna DB engine service [OK]");
-        // while (this.running.get()) {
-        while (true) {
+        while (this.running.get()) {
             Socket clientSocket;
 
             try {
@@ -108,14 +114,19 @@ public class SukunaService {
 
         // First flush the operation queue
         // TODO: Find a better way to flush read/write queues
-        this.operationQueue.pendingReadOperations.clear();
-        this.operationQueue.pendingWriteOperations.clear();
+        // this.operationQueue.pendingReadOperations.clear();
+        // this.operationQueue.pendingWriteOperations.clear();
+        this.operationQueue.flushPendingReadOperations();
+        this.operationQueue.flushPendingWriteOperations();
 
         // Stop the reader and writer workers
         for (ReaderWorker readerWorker : this.readerWorkers) {
             readerWorker.stopWorker();
         }
         this.writerWorker.stopWorker();
+
+        // Stop the service manager thread
+        this.serviceManager.stopServiceManager();
     }
 
     public void updateActiveMemtables(Memtable currentMemtable, List<Memtable> fullMemtables) {
@@ -125,23 +136,5 @@ public class SukunaService {
 
     public void updateActiveSSTables(List<String> activeSSTables) {
         this.activeSSTables.updateActiveSSTables(activeSSTables);
-    }
-
-    public void enqueueReadOperation(ReadOperation readOperation) {
-        try {
-            this.operationQueue.pendingReadOperations.put(readOperation);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-    public void enqueueWriteOperation(WriteOperation writeOperation) {
-        try {
-            this.operationQueue.pendingWriteOperations.put(writeOperation);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 }
