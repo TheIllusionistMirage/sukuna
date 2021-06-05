@@ -23,9 +23,6 @@ public class SukunaServiceManagerThread extends Thread {
     private ActiveSSTablesCompactorThread activeSSTablesCompactorThread;
     private final static Logger logger = LoggerFactory.getLogger(SukunaServiceManagerThread.class);
 
-    // temporary for debugging
-    private boolean compactionRanOnce = false;
-
     public SukunaServiceManagerThread(ActiveMemtables activeMemtables, ActiveSSTables activeSSTables) {
         this.running = new AtomicBoolean(false);
         this.activeMemtables = activeMemtables;
@@ -39,13 +36,14 @@ public class SukunaServiceManagerThread extends Thread {
         
         while (this.running.get()) {
             // For debugging
-            try {
-                Thread.sleep(30 * 1000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                logger.warn("SukunaServiceManagerThread: Sleep interrupted.");
-                e.printStackTrace();
-            }
+            // try {
+            //     // TODO: Add an effective mechanism to suspend this thread when not in use
+            //     // Thread.sleep(30 * 1000);
+            // } catch (InterruptedException e) {
+            //     // TODO Auto-generated catch block
+            //     logger.warn("SukunaServiceManagerThread: Sleep interrupted.");
+            //     e.printStackTrace();
+            // }
 
             // TODO: Unsure if current in the implementation a simultaneous memtable to SSTable persistence and a compaction thead can affect each other
 
@@ -61,8 +59,7 @@ public class SukunaServiceManagerThread extends Thread {
                 this.memtableToSSTablePersistenceThread.start();
             }
 
-            if (this.shouldStartNextCompaction() && !this.compactionRanOnce) {
-                this.compactionRanOnce = true;
+            if (this.shouldStartNextCompaction()) {
                 this.lastCompactionTime = LocalDateTime.now();
                 this.activeSSTablesCompactorThread = new ActiveSSTablesCompactorThread(this.activeSSTables);
                 this.activeSSTablesCompactorThread.start();
@@ -95,9 +92,6 @@ public class SukunaServiceManagerThread extends Thread {
     }
 
     private boolean shouldStartNextCompaction() {
-        // if (this.lastCompactionTime == null) {
-        //     return false;
-        // }
         Duration timeSinceLastCompaction = Duration.between(this.lastCompactionTime, LocalDateTime.now());
         return this.activeSSTables.getActiveSSTables().size() >= Configuration.MaxSimultaneousSSTablesAllowed
             && (this.lastCompactionTime == null || (timeSinceLastCompaction.toMinutes() >= Configuration.MinIntervalBetweenConsecutiveCompactions));

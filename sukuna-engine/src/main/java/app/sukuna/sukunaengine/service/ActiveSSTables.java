@@ -40,12 +40,4 @@ public class ActiveSSTables {
             this.writeLock.unlock();
         }
     }
-
-    public void printActiveSSTables() {
-        String activeSSTables = "";
-        for (String sstableName : this.segmentNames) {
-            activeSSTables += sstableName + " ";
-        }
-        logger.info("ACTIVE SSTABLES: Currently active SSTables: " + activeSSTables);
-    }
 }

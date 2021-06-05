@@ -59,8 +59,5 @@ public class MemtableToSSTablePersistenceThread extends Thread {
 
         this.activeSSTables.updateActiveSSTables(updatedActiveSSTables);
         logger.info("Memtable to SSTable persistence thread finished, memtable: " + memtable.name + " was successfully converted to an SSTable");
-
-        this.activeMemtables.printActiveMemtables();
-        this.activeSSTables.printActiveSSTables();
     }
 }

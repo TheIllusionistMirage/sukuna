@@ -2,9 +2,8 @@ package app.sukuna.sukunaengine.core;
 
 public class Configuration {
     public static int MaxLogSizeBeforeCompaction;
-    // public static int MaxMemtableSizeBeforeSegmentation = 1 * 1024 * 1024; // 5MB is the max allowed memtable size before it is written to a SSTable 
-    public static int MaxMemtableSizeBeforeSegmentation = 10;
-    public static int SegmentBlockSize = 4096;
+    public static int MaxMemtableSizeBeforeSegmentation = 100 * 1024; // 100KB is the max allowed memtable size before it is written to a SSTable 
+    public static int SegmentBlockSize = 4096; // in bytes
     public static int CompactionInterval;
     public static int MergingInterval;
     public static int InvalidIndexOffset = -1;

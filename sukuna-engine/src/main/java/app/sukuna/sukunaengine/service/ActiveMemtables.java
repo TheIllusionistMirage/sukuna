@@ -70,14 +70,4 @@ public class ActiveMemtables {
             this.writeLock.unlock();
         }
     }
-
-    public void printActiveMemtables() {
-        logger.info("ACTIVE MEMTABLES: Currently active memtables: ");
-        logger.info("Current memtable: " + this.currentMemtable.name);
-        String fullMemtableNames = "";
-        for (Memtable memtable : this.fullMemtables) {
-            fullMemtableNames += memtable.name + " ";
-        }
-        logger.info("Full memtables: " + fullMemtableNames);
-    }
 }

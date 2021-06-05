@@ -48,7 +48,7 @@ public class IncomingRequestHandler extends Thread {
         }
 
         try {
-            clientOutputStream.writeBytes("Enter a command: ");
+            //clientOutputStream.writeBytes("Enter a command: ");
             String clientInput = bufferedReader.readLine();
             logger.trace("Client request command: " + clientInput);
 

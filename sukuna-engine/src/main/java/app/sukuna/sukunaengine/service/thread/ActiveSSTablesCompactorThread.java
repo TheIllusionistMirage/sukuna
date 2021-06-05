@@ -28,12 +28,12 @@ public class ActiveSSTablesCompactorThread extends Thread {
         // Initial list of SSTables before compaction
         List<String> initialSSTableNameList = this.activeSSTables.getActiveSSTables();
         
-        // String initialSSTableList = "";
-        // for (String sstableName : initialSSTableNameList) {
-        //     initialSSTableList += sstableName + " ";
-        // }
+        String initialSSTableList = "";
+        for (String sstableName : initialSSTableNameList) {
+            initialSSTableList += sstableName + " ";
+        }
 
-        // logger.info("Active SSTable name list before compaction: " + initialSSTableList);
+        logger.info("Active SSTable name list before compaction: " + initialSSTableList);
 
         // Construct SSTable objects based on the segment files
         SegmentBase[] segments = new SegmentBase[initialSSTableNameList.size()];
@@ -59,22 +59,20 @@ public class ActiveSSTablesCompactorThread extends Thread {
 
         activeSSTableNameList.removeAll(initialSSTableNameList);
 
-        // String currentActiveSSTableNameList = "";
+        String currentActiveSSTableNameList = "";
         for (String activeSSTableName : activeSSTableNameList) {
             updatedActiveSSTableNameList.add(activeSSTableName);
-            // currentActiveSSTableNameList += activeSSTableName + " ";
+            currentActiveSSTableNameList += activeSSTableName + " ";
         }
 
         // TODO: Also add the list of the newly compacted sstables to this list before updating
         for (SegmentBase segment : compactedSegments) {
             updatedActiveSSTableNameList.add(segment.name);
-            // currentActiveSSTableNameList += segment.name + " ";
+            currentActiveSSTableNameList += segment.name + " ";
         }
 
         this.activeSSTables.updateActiveSSTables(updatedActiveSSTableNameList);
 
-        // logger.info("Active SSTable compaction completed, current active SSTable name list: " + currentActiveSSTableNameList);
-
-        this.activeSSTables.printActiveSSTables();
+        logger.info("Active SSTable compaction completed, current active SSTable name list: " + currentActiveSSTableNameList);
     }
 }
