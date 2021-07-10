@@ -12,14 +12,12 @@ import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 
 public abstract class LogBase {
     public final String name;
-    public final int maxLogSize;
     protected IndexBase index;
     protected OutputStream file;
     private static final Logger logger = LoggerFactory.getLogger(LogBase.class);
 
-    public LogBase(String name, int maxLogSize, IndexBase index) {
+    public LogBase(String name, IndexBase index) {
         this.name = name;
-        this.maxLogSize = maxLogSize;
         this.index = index;
 
         try {

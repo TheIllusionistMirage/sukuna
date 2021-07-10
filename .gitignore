@@ -58,4 +58,7 @@ build/
 
 
 # Sukuna
-/database-dumps
+database-dumps/
+sukuna-engine/sukuna-engine/
+sukuna-service/sukuna-engine/
+sukuna-cli-client/sukuna-engine/

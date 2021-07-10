@@ -3,7 +3,6 @@ package app.sukuna.sukunaengine.core.log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
 import app.sukuna.sukunaengine.core.index.InMemoryIndex;
 import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 import app.sukuna.sukunaengine.utils.StringUtils;
@@ -12,7 +11,7 @@ public class AppendOnlyLog extends LogBase {
     private static final Logger logger = LoggerFactory.getLogger(AppendOnlyLog.class);
     
     public AppendOnlyLog(String name) {
-        super(name, Configuration.MaxLogSizeBeforeCompaction, new InMemoryIndex("current-memtable-crash-recovery-log"));
+        super(name, new InMemoryIndex("current-memtable-crash-recovery-log"));
     }
 
     // @Override

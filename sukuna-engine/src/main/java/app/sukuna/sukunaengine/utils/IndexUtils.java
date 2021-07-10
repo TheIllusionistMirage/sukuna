@@ -6,7 +6,7 @@ import java.io.RandomAccessFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 import app.sukuna.sukunaengine.core.index.InMemoryIndex;
 
 public class IndexUtils {

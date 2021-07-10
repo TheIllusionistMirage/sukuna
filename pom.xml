@@ -17,6 +17,7 @@
 
     <modules>
         <module>sukuna-engine</module>
+		<module>sukuna-service</module>
         <module>sukuna-cli-client</module>
     </modules>
 </project>

@@ -8,7 +8,7 @@ import java.io.RandomAccessFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 import app.sukuna.sukunaengine.core.index.ImmutableInMemoryIndex;
 import app.sukuna.sukunaengine.core.index.InMemoryIndex;
 import app.sukuna.sukunaengine.core.index.IndexBase;

@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import app.sukuna.sukunaengine.core.exceptions.ClientClosureException;
+import app.sukuna.sukunaengine.core.exceptions.ClientOutputStreamException;
 import app.sukuna.sukunaengine.core.index.ImmutableInMemoryIndex;
 import app.sukuna.sukunaengine.core.memtable.Memtable;
 import app.sukuna.sukunaengine.core.segment.SSTable;
@@ -17,8 +19,8 @@ import app.sukuna.sukunaengine.service.ActiveMemtables;
 import app.sukuna.sukunaengine.service.ActiveSSTables;
 import app.sukuna.sukunaengine.service.operation.OperationQueue;
 import app.sukuna.sukunaengine.service.operation.ReadOperation;
+import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 
-// public class ReaderWorker implements IReaderWorker, Runnable {
 public class ReaderWorker extends Thread implements IReaderWorker {
     private final String name;
     private AtomicBoolean running;
@@ -29,9 +31,11 @@ public class ReaderWorker extends Thread implements IReaderWorker {
     private HashMap<String, SSTable> sstables;
     private List<String> sstableSequence;
     private static final Logger logger = LoggerFactory.getLogger(ReaderWorker.class);
-    
-    public ReaderWorker(String name, ActiveMemtables activeMemtables, ActiveSSTables activeSSTables, OperationQueue operationQueue) {
+
+    public ReaderWorker(String name, ActiveMemtables activeMemtables, ActiveSSTables activeSSTables,
+            OperationQueue operationQueue) {
         this.name = name;
+        this.setName(this.name);
         this.running = new AtomicBoolean(false);
         this.activeMemtables = activeMemtables;
         this.activeSSTables = activeSSTables;
@@ -47,45 +51,56 @@ public class ReaderWorker extends Thread implements IReaderWorker {
         logger.info("Started reader worker [OK]");
         try {
             while (this.running.get()) {
-                // // Check and optionally update SSTable objects before handling the next read request
-                // // meta-TODO: Optimize updating the SSTable info, checking if SSTables updated before each request is really a bad hit to the performance. Current way is HIGHLY unoptimal and asignificant hit to read operation completion
-                // if (this.SSTableUpdateRequired()) {
-                //     this.updateSSTables();
-                // }
+                // Check and optionally update SSTable objects before handling the next read
+                // request.
+                // meta-TODO: Optimize updating the SSTable info, checking if SSTables
+                // updated before each request is really a bad hit to the performance. Current
+                // way is HIGHLY unoptimal and asignificant hit to read operation completion
+                if (this.SSTableUpdateRequired()) {
+                    this.updateSSTables();
+                }
 
                 ReadOperation readOperation = this.retrievePendingReadOperation();
                 this.processReadOperation(readOperation);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (InterruptedException interruptedException) {
+            if (this.running.get()) {
+                logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(
+                        "Fetching a pending read operation from the read queue was interrupted", interruptedException));
+            }
         }
     }
 
     // IReaderWorker overrides
     @Override
     public ReadOperation retrievePendingReadOperation() throws InterruptedException {
-        //return this.operationQueue.pendingReadOperations.take();
+        // return this.operationQueue.pendingReadOperations.take();
         return this.operationQueue.retrievePendingReadOperation();
     }
 
     @Override
     public void processReadOperation(ReadOperation readOperation) {
         logger.trace("Read operation being handled by reader worker: " + this.name);
-        // Check and optionally update SSTable objects before handling the next read request
-        // meta-TODO: Optimize updating the SSTable info, checking if SSTables updated before each request is really a bad hit to the performance. Current way is HIGHLY unoptimal and asignificant hit to read operation completion
+        // Check and optionally update SSTable objects before handling the next read
+        // request
+        // meta-TODO: Optimize updating the SSTable info, checking if SSTables updated
+        // before each request is really a bad hit to the performance. Current way is
+        // HIGHLY unoptimal and asignificant hit to read operation completion
         if (this.SSTableUpdateRequired()) {
             this.updateSSTables();
         }
 
         // TODO: Perform actual read
-        // Already can determine the active memtable using this.activeMemtables.getCurrentMemtableReadWriteMode() and this.activeMemtables.getFullMemtablesReadWriteMode()
-        
+        // Already can determine the active memtable using
+        // this.activeMemtables.getCurrentMemtableReadWriteMode() and
+        // this.activeMemtables.getFullMemtablesReadWriteMode()
+
         String key = readOperation.key;
         String value = null;
-        
+
         // First check if the key exists in the current memtable
         value = this.activeMemtables.getCurrentMemtableReadWriteMode().read(key);
-        
+
         if (value != null) {
             // TODO: Use readOperation.client to send value back
             this.sendResponseToClient(readOperation, value);
@@ -132,6 +147,8 @@ public class ReaderWorker extends Thread implements IReaderWorker {
 
     public synchronized void stopWorker() {
         this.running.set(false);
+        logger.info(String.format("Stopped reader worker thread %s", this.name));
+        this.interrupt();
     }
 
     private boolean SSTableUpdateRequired() {
@@ -152,10 +169,10 @@ public class ReaderWorker extends Thread implements IReaderWorker {
 
         for (String segmentName : this.activeSSTables.getActiveSSTables()) {
             SSTable sstable = new SSTable();
-            
+
             ImmutableInMemoryIndex index = new ImmutableInMemoryIndex(segmentName);
             index.initialize(segmentName);
-            
+
             sstable.initialize(segmentName, index);
 
             this.sstables.put(segmentName, sstable);
@@ -164,29 +181,28 @@ public class ReaderWorker extends Thread implements IReaderWorker {
     }
 
     private void sendResponseToClient(ReadOperation readOperation, String value) {
-        // TODO: Use readOperation.client to send value back
         if (value == null) {
             value = "NoSuchKeyError: The key: " + readOperation.key + " does not exist in the database";
         }
+
         try {
             DataOutputStream clientOutputStream;
             clientOutputStream = new DataOutputStream(readOperation.client.getOutputStream());
             clientOutputStream.writeBytes(value);
-            readOperation.client.close();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            logger.error("Unable to get client output stream or write to client output stream");
-            e.printStackTrace();
+            logger.trace("Successfully handled read operation for key (" + readOperation.key + ")");
+        } catch (ClientOutputStreamException clientWriteException) {
+            logger.error(ErrorHandlingUtils.getFormattedExceptionDetails("Unable to get client output stream",
+                    clientWriteException));
+        } catch (IOException ioException) {
+            logger.error(ErrorHandlingUtils
+                    .getFormattedExceptionDetails("Unable to write data to client's output stream", ioException));
+        } finally {
             try {
-                readOperation.client.close();
-            } catch (IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
+                readOperation.client.closure();
+            } catch (ClientClosureException clientClosureException) {
+                logger.error(ErrorHandlingUtils.getFormattedExceptionDetails("Unable to perform closure on client",
+                        clientClosureException));
             }
-            return;
         }
-
-        // Dummy placeholder for now
-        logger.info("Successfully handled read operation for key (" + readOperation.key + ")");
     }
 }
