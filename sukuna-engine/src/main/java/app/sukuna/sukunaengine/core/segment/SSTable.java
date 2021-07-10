@@ -6,7 +6,7 @@ import java.io.RandomAccessFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 import app.sukuna.sukunaengine.core.index.IndexBase;
 import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 import app.sukuna.sukunaengine.utils.FileUtils;
@@ -53,7 +53,7 @@ public class SSTable extends SegmentBase {
         long offset = this.index.getOffset(key);
 
         // Record not indexed in memory, find it in SSTable
-        if (offset == Configuration.InvalidIndexOffset) {
+        if (offset == Configuration.InvalidSegmentOffset) {
             // Find which block this key belongs to
             
             logger.debug("Searching for key: " + key);

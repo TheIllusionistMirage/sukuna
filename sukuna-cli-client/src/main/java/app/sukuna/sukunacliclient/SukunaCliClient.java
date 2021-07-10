@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory;
 public class SukunaCliClient {
     private final static String quitCommand = "quit";
     private static Socket serverSocket;
-    private static boolean running = true;
+    private static volatile AtomicBoolean running = new AtomicBoolean(true);
     private final static Logger logger = LoggerFactory.getLogger(SukunaCliClient.class);
 
     public static void main(String[] args) {
@@ -30,19 +31,20 @@ public class SukunaCliClient {
         });
 
         StringBuilder sb = new StringBuilder();
-        
-        sb.append("░██████╗██╗░░░██╗██╗░░██╗██╗░░░██╗███╗░░██╗░█████╗░\n");
-        sb.append("██╔════╝██║░░░██║██║░██╔╝██║░░░██║████╗░██║██╔══██╗\n");
-        sb.append("╚█████╗░██║░░░██║█████═╝░██║░░░██║██╔██╗██║███████║\n");
-        sb.append("░╚═══██╗██║░░░██║██╔═██╗░██║░░░██║██║╚████║██╔══██║\n");
-        sb.append("██████╔╝╚██████╔╝██║░╚██╗╚██████╔╝██║░╚███║██║░░██║\n");
-        sb.append("╚═════╝░░╚═════╝░╚═╝░░╚═╝░╚═════╝░╚═╝░░╚══╝╚═╝░░╚═╝\n");
-        sb.append("                          (Sukuna CLI Client v0.0.1)");
+
+        sb.append(" _____       _                      \n");
+        sb.append("/  ___|     | |                     \n");
+        sb.append("\\ `--. _   _| | ___   _ _ __   __ _ \n");
+        sb.append(" `--. \\ | | | |/ / | | | '_ \\ / _` |\n");
+        sb.append("/\\__/ / |_| |   <| |_| | | | | (_| |\n");
+        sb.append("\\____/ \\__,_|_|\\_\\\\__,_|_| |_|\\__,_|\n");
+        sb.append("                          CLI Client\n");
 
         System.out.println(sb.toString());
         Scanner scanner = new Scanner(System.in);
 
-        while (SukunaCliClient.running) {
+        while (SukunaCliClient.running.get()) {
+            // System.out.println(SukunaCliClient.running.get());
             System.out.print("Sukuna [" + Configuration.SukunaServiceAddress + "@" + Configuration.SukunaServicePort + "] > ");
             
             String command;
@@ -51,7 +53,7 @@ public class SukunaCliClient {
             } catch (Exception exception) {
                 // An exception occurs when SIGTERM is initiated by Ctrl+C
                 System.out.println(""); // append a newline to the prompt
-                continue;
+                break;
             }
 
             // If command is an invalid string, simply skip it
@@ -68,6 +70,11 @@ public class SukunaCliClient {
             // Connect to server, send command and handle response
             SukunaCliClient.connectToServer();
             String serverOutput = SukunaCliClient.sendCommandToServer(command);
+            
+            if (serverOutput == null || serverOutput.isEmpty()) {
+                continue;
+            }
+            
             System.out.println(serverOutput);
         }
 
@@ -76,7 +83,7 @@ public class SukunaCliClient {
     }
 
     private static void stopClient() {
-        SukunaCliClient.running = false;
+        SukunaCliClient.running.set(false);
         SukunaCliClient.connectToServer();
         SukunaCliClient.sendCommandToServer(SukunaCliClient.quitCommand);
     }
@@ -86,16 +93,14 @@ public class SukunaCliClient {
             serverSocket = new Socket(Configuration.SukunaServiceAddress, Configuration.SukunaServicePort);
         } catch (UnknownHostException exception) {
             logger.error("Unable to connect to host: " + Configuration.SukunaServiceAddress + ", port: " + Configuration.SukunaServicePort + ", invalid host/port");
-            running = false;
         } catch (IOException exception) {
             logger.error("Unable to connect to host: " + Configuration.SukunaServiceAddress + ", port: " + Configuration.SukunaServicePort + ", no response received from server");
-            running = false;
         }
     }
 
     private static String sendCommandToServer(String command) {
         if (serverSocket == null) {
-            logger.warn("Attempt to send a command(" + command + " to the server when not connected to server");
+            logger.warn("Attempt to send a command (" + command + ") to the server when not connected to server");
             return null;
         }
         

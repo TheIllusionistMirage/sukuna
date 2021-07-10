@@ -4,7 +4,7 @@ import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 
 public class Memtable extends MemtableBase {
     public static int number = 0;

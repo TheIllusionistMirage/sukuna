@@ -7,6 +7,14 @@ public class ErrorHandlingUtils {
         sb.append("Error message: ");
         sb.append(errorMessage);
         sb.append("\n");
+        sb.append(getFormattedExceptionDetails(exception));
+
+        return sb.toString();
+    }
+
+    public static String getFormattedExceptionDetails(Exception exception) {
+        StringBuilder sb = new StringBuilder();
+
         sb.append("Exception(s) occurred: ");
         sb.append(exception.getMessage());
         sb.append("\n");

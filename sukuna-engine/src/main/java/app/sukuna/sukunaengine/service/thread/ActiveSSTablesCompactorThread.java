@@ -18,6 +18,7 @@ public class ActiveSSTablesCompactorThread extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(ActiveSSTablesCompactorThread.class);
 
     public ActiveSSTablesCompactorThread(ActiveSSTables activeSSTables) {
+        this.setName("ActiveSSTablesCompactorThread");
         this.activeSSTables = activeSSTables;
     }
 

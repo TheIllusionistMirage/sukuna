@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 
 public class SSTableCreationUtility {
     // public IndexBase createIndex() {

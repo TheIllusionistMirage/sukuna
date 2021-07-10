@@ -1,9 +1,9 @@
 package app.sukuna.sukunaengine.core.memtable;
 
 public abstract class MemtableBase {
-    protected final int maxAllowedCapacity;
+    protected final long maxAllowedCapacity;
 
-    public MemtableBase(int memtableCapacity) {
+    public MemtableBase(long memtableCapacity) {
         this.maxAllowedCapacity = memtableCapacity;
     }
 

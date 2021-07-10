@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import app.sukuna.sukunaengine.core.exceptions.InvalidClientCommandException;
 import app.sukuna.sukunaengine.core.exceptions.InvalidClientException;
+import app.sukuna.sukunaengine.service.client.ClientBase;
+import app.sukuna.sukunaengine.service.client.TcpClient;
 import app.sukuna.sukunaengine.service.operation.OperationBase;
 import app.sukuna.sukunaengine.service.operation.ReadOperation;
 import app.sukuna.sukunaengine.service.operation.WriteOperation;
@@ -16,8 +18,15 @@ public class TcpClientCommandParser implements IClientCommandParser {
     private final static Logger logger = LoggerFactory.getLogger(TcpClientCommandParser.class);
 
     @Override
-    public OperationBase parseClientCommand(Socket clientSocket, ClientCommandBase clientCommand) throws InvalidClientCommandException {
+    public OperationBase parseClientCommand(ClientBase client, ClientCommandBase clientCommand) throws InvalidClientCommandException {
+        TcpClient tcpClient = (TcpClient) client;
         TcpClientCommand tcpClientCommand = (TcpClientCommand) clientCommand;
+
+        if (tcpClient == null) {
+            String errorMsg = "Error occurred while parsing TCP Client command, invalid client object passed to parser";
+            logger.error(errorMsg);
+            throw new InvalidClientCommandException(errorMsg);
+        }
 
         if (tcpClientCommand == null) {
             String errorMsg = "Error occurred while parsing TCP Client command, invalid client command object passed to parser";
@@ -33,7 +42,7 @@ public class TcpClientCommandParser implements IClientCommandParser {
         if (commandType.equals("quit")) {
             logger.trace("Client decided to quit after connecting, closing connection");
             try {
-                clientSocket.close();
+                tcpClient.clientSocket.close();
                 return null;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -55,7 +64,7 @@ public class TcpClientCommandParser implements IClientCommandParser {
 
             try {
                 //return (OperationBase)(new WriteOperation(clientSocket, key, value));
-                return new WriteOperation(clientSocket, key, value);
+                return new WriteOperation(tcpClient, key, value);
             } catch (InvalidClientException e) {
                 // TODO Auto-generated catch block
                 logger.error("Unable to create WriteOperation object");
@@ -69,7 +78,7 @@ public class TcpClientCommandParser implements IClientCommandParser {
 
             try {
                 //return (OperationBase)(new WriteOperation(clientSocket, key, value));
-                return new ReadOperation(clientSocket, key);
+                return new ReadOperation(tcpClient, key);
             } catch (InvalidClientException e) {
                 // TODO Auto-generated catch block
                 logger.error("Unable to create WriteOperation object");

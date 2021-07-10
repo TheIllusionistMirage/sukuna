@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 import app.sukuna.sukunaengine.core.memtable.Memtable;
 import app.sukuna.sukunaengine.service.ActiveMemtables;
 import app.sukuna.sukunaengine.service.ActiveSSTables;
@@ -24,6 +24,7 @@ public class SukunaServiceManagerThread extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(SukunaServiceManagerThread.class);
 
     public SukunaServiceManagerThread(ActiveMemtables activeMemtables, ActiveSSTables activeSSTables) {
+        this.setName("SukunaServiceManagerThread");
         this.running = new AtomicBoolean(false);
         this.activeMemtables = activeMemtables;
         this.activeSSTables = activeSSTables;
@@ -35,16 +36,6 @@ public class SukunaServiceManagerThread extends Thread {
         this.running.set(true);
         
         while (this.running.get()) {
-            // For debugging
-            // try {
-            //     // TODO: Add an effective mechanism to suspend this thread when not in use
-            //     // Thread.sleep(30 * 1000);
-            // } catch (InterruptedException e) {
-            //     // TODO Auto-generated catch block
-            //     logger.warn("SukunaServiceManagerThread: Sleep interrupted.");
-            //     e.printStackTrace();
-            // }
-
             // TODO: Unsure if current in the implementation a simultaneous memtable to SSTable persistence and a compaction thead can affect each other
 
             Memtable currentMemtable = this.activeMemtables.getCurrentMemtableReadWriteMode();
@@ -65,10 +56,6 @@ public class SukunaServiceManagerThread extends Thread {
                 this.activeSSTablesCompactorThread.start();
             }
         }
-    }
-
-    public void stopManager() {
-        this.running.set(false);
     }
 
     private void updateActiveMemtables(Memtable currentMemtable) {
@@ -93,17 +80,27 @@ public class SukunaServiceManagerThread extends Thread {
 
     private boolean shouldStartNextCompaction() {
         Duration timeSinceLastCompaction = Duration.between(this.lastCompactionTime, LocalDateTime.now());
-        return this.activeSSTables.getActiveSSTables().size() >= Configuration.MaxSimultaneousSSTablesAllowed
-            && (this.lastCompactionTime == null || (timeSinceLastCompaction.toMinutes() >= Configuration.MinIntervalBetweenConsecutiveCompactions));
+        return this.activeSSTables.getActiveSSTables().size() >= Configuration.MaxSimultaneousSegmentsAllowed
+            && (this.lastCompactionTime == null || (timeSinceLastCompaction.toMinutes() >= Configuration.MinIntervalBetweenConsecutiveCompactionsInMins));
     }
 
     public void stopServiceManager() {
+        this.running.set(false);
+
+        // TODO: Ensure that stopping the Sukuna Engine ensures pending operations to get completed first
+        logger.info("Stopping service manager thread...");
+
         if (this.memtableToSSTablePersistenceThread != null && this.memtableToSSTablePersistenceThread.isAlive()) {
+            logger.warn("Memtable to SSTable persistence thread currently active, terminating thread");
             this.memtableToSSTablePersistenceThread.interrupt();
         }
 
         if (this.activeSSTablesCompactorThread != null && this.activeSSTablesCompactorThread.isAlive()) {
+            logger.warn("SSTable compaction thread currently active, terminating thread");
             this.activeSSTablesCompactorThread.interrupt();
         }
+
+        logger.info("Stopped service manager thread [OK]");
+        this.interrupt();
     }
 }

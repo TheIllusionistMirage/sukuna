@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 import app.sukuna.sukunaengine.core.Record;
 import app.sukuna.sukunaengine.core.index.ImmutableInMemoryIndex;
 import app.sukuna.sukunaengine.core.index.InMemoryIndex;

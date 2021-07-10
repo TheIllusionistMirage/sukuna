@@ -6,7 +6,7 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.sukuna.sukunaengine.core.Configuration;
+import app.sukuna.sukunaengine.core.configuration.Configuration;
 import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 import app.sukuna.sukunaengine.utils.FileUtils;
 
@@ -74,7 +74,7 @@ public class InMemoryIndex extends IndexBase {
     @Override
     public long getOffset(String key) {
         Long offset = this.index.get(key);
-        return offset == null ? Configuration.InvalidIndexOffset : offset.longValue();
+        return offset == null ? Configuration.InvalidSegmentOffset : offset.longValue();
     }
 
     @Override

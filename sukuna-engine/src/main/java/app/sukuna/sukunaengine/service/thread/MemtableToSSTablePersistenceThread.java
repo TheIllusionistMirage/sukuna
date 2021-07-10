@@ -19,6 +19,7 @@ public class MemtableToSSTablePersistenceThread extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(MemtableToSSTablePersistenceThread.class);
 
     public MemtableToSSTablePersistenceThread(Memtable memtable, ActiveMemtables activeMemtables, ActiveSSTables activeSSTables) {
+        this.setName("MemtableToSSTablePersistenceThread");
         this.memtable = memtable;
         this.activeMemtables = activeMemtables;
         this.activeSSTables = activeSSTables;

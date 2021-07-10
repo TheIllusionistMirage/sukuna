@@ -7,13 +7,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import app.sukuna.sukunaengine.core.exceptions.ClientClosureException;
+import app.sukuna.sukunaengine.core.exceptions.ClientOutputStreamException;
 import app.sukuna.sukunaengine.service.ActiveMemtables;
 import app.sukuna.sukunaengine.service.operation.OperationQueue;
 import app.sukuna.sukunaengine.service.operation.WriteOperation;
+import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 
-// public class WriterWorker implements IWriterWorker, Runnable {
-    public class WriterWorker extends Thread implements IWriterWorker {
-        private final String name;
+public class WriterWorker extends Thread implements IWriterWorker {
+    private final String name;
     private AtomicBoolean running;
     private final ActiveMemtables activeMemtables;
     private final OperationQueue operationQueue;
@@ -21,6 +23,7 @@ import app.sukuna.sukunaengine.service.operation.WriteOperation;
 
     public WriterWorker(String name, ActiveMemtables activeMemtables, OperationQueue operationQueue) {
         this.name = name;
+        this.setName(this.name);
         this.running = new AtomicBoolean(false);
         this.activeMemtables = activeMemtables;
         this.operationQueue = operationQueue;
@@ -37,8 +40,12 @@ import app.sukuna.sukunaengine.service.operation.WriteOperation;
                 WriteOperation writeOperation = this.retrievePendingWriteOperation();
                 this.processWriteOperation(writeOperation);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (InterruptedException interruptedException) {
+            if (this.running.get()) {
+                logger.error(ErrorHandlingUtils.getFormattedExceptionDetails(
+                        "Fetching a pending write operation from the write queue was interrupted",
+                        interruptedException));
+            }
         }
     }
 
@@ -53,11 +60,12 @@ import app.sukuna.sukunaengine.service.operation.WriteOperation;
     public void processWriteOperation(WriteOperation writeOperation) {
         logger.trace("Write operation being handled by writer worker: " + this.name);
         // TODO: Perform actual write operation
-        // Already can determine the current memtable using this.activeMemtables.getCurrentMemtableReadWriteMode()
+        // Already can determine the current memtable using
+        // this.activeMemtables.getCurrentMemtableReadWriteMode()
 
         String key = writeOperation.key;
         String value = writeOperation.value;
-        
+
         // First check if the key exists in the current memtable
         this.activeMemtables.getCurrentMemtableReadWriteMode().upsert(key, value);
 
@@ -67,28 +75,30 @@ import app.sukuna.sukunaengine.service.operation.WriteOperation;
 
     public synchronized void stopWorker() {
         this.running.set(false);
+        logger.info(String.format("Stopped writer worker thread %s", this.name));
+        this.interrupt();
     }
 
     private void sendResponseToClient(WriteOperation writeOperation) {
-        // TODO: Use writeOperation.client to send value back
         try {
             DataOutputStream clientOutputStream = new DataOutputStream(writeOperation.client.getOutputStream());
-            clientOutputStream.writeBytes("Successfully added record with key: " + writeOperation.key + " and value: " + writeOperation.value);
-            writeOperation.client.close();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            logger.error("Unable to get client output stream or write to client output stream");
-            e.printStackTrace();
+            clientOutputStream.writeBytes("Successfully added record with key: " + writeOperation.key + " and value: "
+                    + writeOperation.value);
+            logger.trace(
+                    "Successfully wrote value (" + writeOperation.value + ") for key (" + writeOperation.key + ")");
+        } catch (ClientOutputStreamException clientWriteException) {
+            logger.error(ErrorHandlingUtils.getFormattedExceptionDetails("Unable to get client output stream",
+                    clientWriteException));
+        } catch (IOException ioException) {
+            logger.error(ErrorHandlingUtils.getFormattedExceptionDetails("Unable to write to client output stream",
+                    ioException));
+        } finally {
             try {
-                writeOperation.client.close();
-            } catch (IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
+                writeOperation.client.closure();
+            } catch (ClientClosureException clientClosureException) {
+                logger.error(ErrorHandlingUtils.getFormattedExceptionDetails("Unable to perform closure on client",
+                        clientClosureException));
             }
-            return;
         }
-
-        // Dummy placeholder for now
-        logger.info("Successfully wrote value (" + writeOperation.value + ") for key (" + writeOperation.key + ")");
     }
 }
