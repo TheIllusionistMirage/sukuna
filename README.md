@@ -1,6 +1,6 @@
 # Sukuna
 
-Sukuna is an experimental log based (SSTable) key-value storage engine.
+Sukuna is an experimental log based (SSTable), disk backed, key-value storage engine.
 
 ## Dependencies
 
@@ -14,6 +14,10 @@ $ git clone https://github.com/TheIllusionistMirage/sukuna.git
 $ cd sukuna
 $ ./build.sh
 ```
+
+This will build three JAR files corresponding to the modules `sukuna-engine`, `sukuna-service` and `sukuna-cli-client`.
+
+The JAR for `sukuna-engine` can be embedded into any Java application that wants to control how the engine is hosted and things like setup 
 
 ## Trying It Out
 
@@ -39,3 +43,11 @@ Currently only two operations are supported:
 
 * `get <key>`
 * `set <key> <value>`
+
+## Documentation
+
+You can find the documentation related to this project in the [`design`](design) directory.
+
+## License
+
+Sukuna is licensed under GNU AGPLv3, see [`LICENSE`](LICENSE) for more details.
