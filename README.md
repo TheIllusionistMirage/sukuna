@@ -17,7 +17,7 @@ $ ./build.sh
 
 This will build three JAR files corresponding to the modules `sukuna-engine`, `sukuna-service` and `sukuna-cli-client`.
 
-The JAR for `sukuna-engine` can be embedded into any Java application that wants to control how the engine is hosted and things like setup 
+The JAR for `sukuna-engine` can be embedded into any Java application that wants to control how the engine is hosted.
 
 ## Trying It Out
 
