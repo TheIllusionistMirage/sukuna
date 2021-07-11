@@ -14,12 +14,15 @@ import app.sukuna.sukunaengine.service.ActiveSSTables;
 import app.sukuna.sukunaengine.service.ClientConnectionsQueue;
 import app.sukuna.sukunaengine.service.SukunaEngineMainThread;
 import app.sukuna.sukunaengine.service.client.TcpClient;
+import app.sukuna.sukunaengine.service.command.IClientCommandParser;
+import app.sukuna.sukunaengine.service.command.TcpClientCommandParser;
 import app.sukuna.sukunaengine.service.operation.OperationQueue;
 import app.sukuna.sukunaengine.service.request.TcpClientConnection;
 import app.sukuna.sukunaengine.utils.ErrorHandlingUtils;
 
 public class SukunaService {
-    private static ClientConnectionsQueue clientRequestsQueue;
+    private static ClientConnectionsQueue clientConnectionsQueue;
+    private static IClientCommandParser clientCommandParser;
     private static SukunaEngineMainThread sukunaEngine;
     private static ServerSocket serverSocket;
     private static int port = 6969;
@@ -58,9 +61,10 @@ public class SukunaService {
         // port = Integer.parseInt(args[1]);
 
         // Initialize engine
-        clientRequestsQueue = new ClientConnectionsQueue();
+        clientConnectionsQueue = new ClientConnectionsQueue();
+        clientCommandParser = new TcpClientCommandParser();
 
-        sukunaEngine = new SukunaEngineMainThread(clientRequestsQueue, new ActiveMemtables(), new ActiveSSTables(),
+        sukunaEngine = new SukunaEngineMainThread(clientConnectionsQueue, clientCommandParser, new ActiveMemtables(), new ActiveSSTables(),
                 new OperationQueue());
 
         // Start engine
@@ -92,7 +96,7 @@ public class SukunaService {
                 // Add the incoming connection to the client connection queue
                 TcpClientConnection tcpClientRequest = new TcpClientConnection(
                         new TcpClient(clientSocket.getInetAddress().getHostName(), clientSocket));
-                clientRequestsQueue.enqueueIncomingConnection(tcpClientRequest);
+                clientConnectionsQueue.enqueueIncomingConnection(tcpClientRequest);
 
                 logger.trace("New client connected to register operation");
             } catch (IOException ioException) {
