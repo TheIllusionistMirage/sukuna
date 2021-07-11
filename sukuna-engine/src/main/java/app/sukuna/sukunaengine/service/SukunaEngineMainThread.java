@@ -12,7 +12,7 @@ import app.sukuna.sukunaengine.service.command.IClientCommandParser;
 import app.sukuna.sukunaengine.service.command.TcpClientCommandParser;
 import app.sukuna.sukunaengine.service.operation.OperationQueue;
 import app.sukuna.sukunaengine.service.request.ClientConnectionBase;
-import app.sukuna.sukunaengine.service.thread.IncomingRequestHandler;
+import app.sukuna.sukunaengine.service.thread.IncomingConnectionHandler;
 import app.sukuna.sukunaengine.service.thread.SukunaServiceManagerThread;
 import app.sukuna.sukunaengine.service.worker.ReaderWorker;
 import app.sukuna.sukunaengine.service.worker.WriterWorker;
@@ -24,17 +24,17 @@ public class SukunaEngineMainThread extends Thread {
     private List<ReaderWorker> readerWorkers;
     private WriterWorker writerWorker;
     public OperationQueue operationQueue;
-    public ClientConnectionsQueue clientRequestsQueue;
+    public ClientConnectionsQueue clientConnectionsQueue;
     private IClientCommandParser clientCommandParser;
     private SukunaServiceManagerThread serviceManager;
     private static final Logger logger = LoggerFactory.getLogger(SukunaEngineMainThread.class);
 
     // Call default constructor when database engine starting with no previous data
-    public SukunaEngineMainThread(ClientConnectionsQueue clientRequestsQueue, ActiveMemtables activeMemtables, ActiveSSTables activeSSTables, OperationQueue operationQueue) {
+    public SukunaEngineMainThread(ClientConnectionsQueue clientRequestsQueue, IClientCommandParser clientCommandParser, ActiveMemtables activeMemtables, ActiveSSTables activeSSTables, OperationQueue operationQueue) {
         this.setName("SukunaEngineMainThread");
         this.running = new AtomicBoolean(false);
 
-        this.clientRequestsQueue = clientRequestsQueue;
+        this.clientConnectionsQueue = clientRequestsQueue;
 
         // Initialize the first memtable
         this.activeMemtables = activeMemtables;
@@ -55,7 +55,8 @@ public class SukunaEngineMainThread extends Thread {
         this.writerWorker = new WriterWorker("WriterWorker-1", this.activeMemtables, this.operationQueue);
 
         // Initialize the client command parser
-        this.clientCommandParser = new TcpClientCommandParser();
+        // this.clientCommandParser = new TcpClientCommandParser();
+        this.clientCommandParser = clientCommandParser;
 
         // Initialize the service manager thread
         this.serviceManager = new SukunaServiceManagerThread(this.activeMemtables, this.activeSSTables);
@@ -97,9 +98,9 @@ public class SukunaEngineMainThread extends Thread {
 
         logger.info("Started Sukuna DB engine service [OK]");
         while (this.running.get()) {
-            ClientConnectionBase request = this.retrieveIncomingClientRequest();
+            ClientConnectionBase clientConnection = this.retrieveClientConnection();
 
-            if (request == null) {
+            if (clientConnection == null) {
                 continue;
             }
 
@@ -107,7 +108,7 @@ public class SukunaEngineMainThread extends Thread {
             
             // TODO: This is not practical on a large scale, use a threadpool instead
             // Create new thread to handle request
-            new IncomingRequestHandler(request, this.clientCommandParser, this.operationQueue).start();
+            new IncomingConnectionHandler(clientConnection, this.clientCommandParser, this.operationQueue).start();
         }
     }
 
@@ -120,7 +121,7 @@ public class SukunaEngineMainThread extends Thread {
         
         this.running.set(false);
         
-        this.clientRequestsQueue.flushUnhandledConnections();
+        this.clientConnectionsQueue.flushUnhandledConnections();
 
         // Stop the reader and writer workers
         logger.info("Stopping reader worker threads...");
@@ -165,9 +166,9 @@ public class SukunaEngineMainThread extends Thread {
         this.activeSSTables.updateActiveSSTables(activeSSTables);
     }
 
-    private ClientConnectionBase retrieveIncomingClientRequest() {
+    private ClientConnectionBase retrieveClientConnection() {
         try {
-            return this.clientRequestsQueue.retrieveConnection();
+            return this.clientConnectionsQueue.retrieveConnection();
         } catch (InterruptedException e) {
             logger.debug("The client request queue was interrupted while waiting");
             return null;
